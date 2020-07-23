@@ -4,7 +4,6 @@ sub_string_dict = {}
 dictFile = {1: "about.txt"}
 listString = []
 
-
 def read_from_file():
     for key, value in dictFile.items():
         with open(value) as the_file:
