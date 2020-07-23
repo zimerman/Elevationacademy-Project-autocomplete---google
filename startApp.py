@@ -1,33 +1,29 @@
 from AutoComplete import autocompleteData
 from data_structure import ignore_character
-from data_structure import read_from_file, init_data
 
 
 def print_obj(obj):
-    print(obj.get_completed_sentence() + ' ' + obj.get_source_text()[:-4] + '(' + str(obj.get_offset()) + ')')
+    print(obj.get_completed_sentence() + "(" + obj.get_source_text() + " " + str(obj.get_offset()) + ")")
 
 
-def print_completion(list_obj):
-    if len(list_obj) == 0:
+def print_autocomplete(list_completed):
+    if not list_completed:
         print("Not found match suggestions")
         return False
-    for obj in list_obj:
+    for obj in list_completed:
         print("Here are suggestion \n")
         print_obj(obj)
     return True
 
 
 def start_app():
-    user_input = input("Enter search input")
+    string = input("press your search")
     while True:
-        while user_input[-1] != '#':
-            if not print_completion(autocompleteData(ignore_character(user_input))):
+        while string[-1] != '#':
+            if not print_autocomplete(autocompleteData(ignore_character((string)))):
                 break
-            user_input += input()
-            print(user_input)
-        user_input = input("Enter search input")
+            string += input(string)
+        string = input("press your search")
 
 
-read_from_file()
-init_data()
 start_app()
