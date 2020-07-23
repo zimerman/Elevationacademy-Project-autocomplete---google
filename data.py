@@ -1,118 +1,126 @@
 from AutoComplete import Autocomplete
-dict = {}
-dictFile = {1:"about.txt"}
+import re
+sub_string_dict = {}
+dictFile = {1: "about.txt"}
 listString = []
-def readFromFile():
-    for key,value in dictFile.items():
+
+
+def read_from_file():
+    for key, value in dictFile.items():
         with open(value) as the_file:
-            templistString = the_file.read().split("\n")
-        for str in templistString:
-            listString.append({"sentence" :str, "source": key})
+            temp_list_string = the_file.read().split("\n")
+        for index_line, line in enumerate(temp_list_string,1):
+            listString.append({"sentence": line, "source": 1, "offset": index_line})
 
 
-def initData():
-    for j in range(len(listString)):
-        for index in range(len(listString[j]["sentence"])+1):
-            dict.setdefault(listString[j]["sentence"][:index+1], set()).add(j)
-        listwords = listString[j]["sentence"].split(" ")
-        for i in range(len(listwords)):
-            for k in range(len(listwords[i])+1):
-                dict.setdefault(listwords[i][:k + 1], set()).add(j)
-    for sentence in dict.keys():
-        dict[sentence] = sorted(dict[sentence],
-            key=lambda k: listString[k]["sentence"][(listString[k]["sentence"]).index(sentence):])
+def init_data():
+    for ind_sent in range(len(listString)):
+        for index in range(len(listString[ind_sent]["sentence"])):
+            for index2 in range(index+1, len(listString[ind_sent]["sentence"])+1):
+                sub_string_dict.setdefault((ignore_character(listString[ind_sent]["sentence"])[index:index2]), set()).add(ind_sent)
+                sub_string_dict.setdefault((ignore_character(listString[ind_sent]["sentence"])[index2:index]), set()).add(ind_sent)
+    for sentence in sub_string_dict.keys():
+        sub_string_dict[sentence] = list(sub_string_dict[sentence])
+        sub_string_dict[sentence] = sorted(sub_string_dict[sentence], key=lambda k: listString[k]["sentence"])
 
 
-readFromFile()
-initData()
-print(dict)
+def ignore_character(string):
+    return re.sub('[^a-z0-9]+', '', string.lower())
 
-print(len(dict))
-def change(string,count,list1):
+
+def is_exist_completion(list_dict, completion_sentences):
+    for item in list_dict:
+        if listString[item["index"]]["sentence"] == completion_sentences:
+            return True
+    return False
+
+
+def change(string, count, list_dict):
     print("i amm change")
-    flag = 0
     score = 0
-    for lenghString, word in enumerate(string[::-1],1):
+    index = len(string)
+    for lenghString, word in enumerate(string[::-1], 1):
         for x in range(ord('a'), ord('z') + 1):
-            if dict.get(string.replace(word, chr(x))):
-                    if chr(x) != string[-lenghString]:
-                        if lenghString <= len(string) - 4:
-                            score = 1
-                        else:
-                            score = lenghString - 1
-                        i = 0
-                        while count < 5 and i < len(dict[string.replace(word, "",1)]):
-                            list1.append(Autocomplete(listString[i]["sentence"], dictFile[listString[i]["source"]], listString[i]["sentence"].find(string[:-lenghString]),2 * len(string) - score).print())
-                            i = i + 1
-                            count = count + 1
-                        flag = 1
-                        return flag
-
-
-def add(string,count,list1):
-    print("i amm add")
-    flag = 0
-    for lenghString, word in enumerate(string[::-1],1):
-        for x in range(ord('a'), ord('z') + 1):
-            if dict.get(string.replace(word, word+chr(x))):
-                    if lenghString <= len(string) - 4:
-                        score = 1
+            if sub_string_dict.get(string.replace(word, chr(x))):
+                if chr(x) != string[-lenghString]:
+                    if index < 5:
+                        score = 5 - index
                     else:
-                        score = lenghString - 1
+                        score = 1
                     i = 0
-                    while (count < 5 and i < len(dict[string.replace(word, word+chr(x))])):
-                        list1.append(Autocomplete(listString[i]["sentence"], dictFile[listString[i]["source"]], listString[i]["sentence"].find(string.replace(word, word+chr(x))),2 * len(string) - score*2).print())
+                    while count < 5 and i < len(sub_string_dict[string.replace(word, chr(x),1)]):
+                        if not is_exist_completion(list_dict, listString[sub_string_dict[string.replace(word, chr(x),1)][i]]["sentence"]):
+                            list_dict.append({"index": sub_string_dict[string.replace(word, chr(x),1)][i], "score": 2 * len(string) - score})
                         i = i + 1
                         count = count + 1
-                    flag = 1
-                    return flag
 
 
-def delete(string, count, list1):
+def add(string, count, list_dict):
+    print("i amm add")
+    index = len(string)
+    for lenghString, word in enumerate(string[::-1],1):
+        for x in range(ord('a'), ord('z') + 1):
+            if sub_string_dict.get(string.replace(word, word+chr(x))):
+                    if index < 5:
+                        score = 5 - index
+                    else:
+                        score = 1
+                    i = 0
+                    while count < 5 and i < len(sub_string_dict[string.replace(word, word+chr(x))]):
+                        if not is_exist_completion(list_dict, listString[sub_string_dict[string.replace(word, word+chr(x), 1)][i]]["sentence"]):
+                            list_dict.append({"index": sub_string_dict[string.replace(word, word+chr(x))][i], "score": 2 * len(string) - 2 * score})
+                        i = i + 1
+                        count = count + 1
+        index = index - 1
+    return list_dict
+
+
+def delete(string, count, list_dict):
     print("i amm delete")
     flag = 0
-    for lenghString, word in enumerate(string[::-1],1):
-            if dict.get(string.replace(word, "",1)):
-                if lenghString <= len(string) - 4:
-                    score = 1
+    index = len(string)
+    for lenghString, word in enumerate(string[::-1], 1):
+            if sub_string_dict.get(string.replace(word, "", 1)):
+                if index < 5:
+                    score = 5 - index
                 else:
-                    score = lenghString - 2
+                    score = 1
                 i = 0
-                while count < 5 and i < len(dict[string.replace(word, "",1)]):
-                    list1.append(Autocomplete(listString[i]["sentence"], dictFile[listString[i]["source"]], listString[i]["sentence"].find(string.replace(word, "",1)),
-                                              2 * len(string) - 2*score).print())
+                while count < 5 and i < len(sub_string_dict[string.replace(word, "", 1)]):
+                    if not is_exist_completion(list_dict, listString[sub_string_dict[string.replace(word, "", 1)][i]]["sentence"]):
+                        list_dict.append({"index": sub_string_dict[string.replace(word, "", 1)][i], "score": 2 * len(string) - 2*score})
                     i = i + 1
                     count = count + 1
-                flag = 1
-                return flag
 
 
-def changeInput(string, count, list1):
-
-    if(change(string,count,list1)):
-        return
-    else:
-        if(delete(string,count,list1)):
-            return
-        else:
-            if(add(string, count, list1)):
-                return
+def changeInput(string, count, list_dict):
+    change(string, count, list_dict)
+    delete(string, count, list_dict)
+    add(string, count, list_dict)
+    list_dict = sorted(list_dict, key=lambda x: x["score"], reverse=True)
+    return list_dict
 
 
 def autocompleteData(string):
+    list_dict = []
     list1 = []
     count = 0
-    if(dict.get(string)):
-        for index in dict[string]:
+    if sub_string_dict.get(string):
+        for index in sub_string_dict[string]:
             if count < 5:
-                list1.append(Autocomplete(listString[index]["sentence"], dictFile[listString[index]["source"]],listString[index]["sentence"].find(string),2*len(string)).print())
+                list_dict.append({"index": index, "score": 2 * len(string)})
             count = count+1
         if count < 5:
-            changeInput(string,count,list1)
+            changeInput(string, count, list_dict)
     else:
-       changeInput(string,count,list1)
+        changeInput(string, count, list_dict)
+    i = len(list1)
+    for dict in list_dict:
+        if i < 5:
+            list1.append(Autocomplete(listString[dict["index"]]["sentence"], dictFile[listString[dict["index"]]["source"]],listString[dict["index"]]["offset"], dict["score"]))
+        i = i + 1
     return list1
 
 
-str = "wond"
-print(autocompleteData(str))
+read_from_file()
+init_data()
