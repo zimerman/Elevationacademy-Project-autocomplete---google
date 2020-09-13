@@ -7,11 +7,12 @@ def print_autocomplete(list_completed):
     if not list_completed:
         list_box.insert(END, "Not found match suggestions")
         name.delete(0, END)
-    list_box.insert(END, "Here are suggestion")
+    else:
+        list_box.insert(END, "Here are suggestion")
     list_box.insert(END, "\n")
     for obj in list_completed:
-        list_box.insert(END, obj.get_completed_sentence() + "(" + obj.get_source_text() + " " + str(obj.get_offset()) + ")")
-        list_box.insert(END, "\n")
+            list_box.insert(END, obj.get_completed_sentence() + "(" + obj.get_source_text() + " " + str(obj.get_offset()) + ")")
+            list_box.insert(END, "\n")
 
 
 def start_app(string):
